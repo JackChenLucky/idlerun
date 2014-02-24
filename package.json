@@ -1,0 +1,9 @@
+{
+	"name": "idlerun",
+	"version": "0.0.1",
+	"private": true,
+	"main": "build/Release/idlerun.node",
+	"engines" : {
+		"node" : ">=0.8.x <0.11"
+	}
+}
