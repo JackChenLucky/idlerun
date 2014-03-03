@@ -7,7 +7,11 @@ var idlerun = require('../'),
 console.log('Start');
 
 process.on('idle', function(a) {
-	console.error('Process User Idle for: %d', a);
+	console.error('User Idle');
+});
+
+process.on('active', function(a) {
+	console.error('User Active');
 });
 
 setTimeout(function(){
@@ -26,11 +30,11 @@ idlerunner = idlerun(timeout, function(a) {
 	console.error('User Idle for: %d', a);
 });
 
-idleEvent = idlerunner.Emitter();
+/*idleEvent = idlerunner.Emitter();
 
 idleEvent.on('idle', function(a) {
 	console.error('Event User Idle for: %d', a);
-});
+});*/
 
 console.log('Triggered One');
 
