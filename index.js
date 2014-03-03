@@ -1,5 +1,5 @@
-module.exports = function(timeout){
-	var idlerun = require('./build/Release/idlerun.node')(timeout),
+module.exports = function(timeout, idleCB){
+	var idlerun = require('./build/Release/idlerun.node')(timeout, idleCB),
 		events = require('events'),
 		util = require('util');
 

@@ -7,8 +7,9 @@
 #include <node.h>
 #include <v8.h>
 #include <uv.h>
-#include <Windows.h>
+#include <windows.h>
 #include <direct.h>
+#include "nan.h"
 
 using namespace v8;
 using namespace node;
@@ -25,32 +26,39 @@ uv_process_t child_req;
 uv_process_options_t options;
 
 static const unsigned int interval = 1000;
-int64_t timeout, timeoutSeconds;
-int64_t timeIdle = 0;
+int timeout, timeoutSeconds;
+int timeIdle = 0;
 LASTINPUTINFO lif;
 DWORD tickCount;
+Local<Function> idleCB;
 
 void track_idle_time(uv_timer_t *handle, int status) {
-	//fprintf(stderr, "Freeing unused objects\n");
 
 	GetLastInputInfo(&lif);
 	tickCount = GetTickCount();
 	timeIdle = (tickCount - lif.dwTime) / 1000;
 
 	if(timeIdle >= timeoutSeconds) {
-		printf("Idle %d seconds > %d seconds\n", timeIdle, timeoutSeconds);
+		//printf("Idle %d seconds > %d seconds\n", timeIdle, timeoutSeconds);
+
 		/*
 		Local<Object> global = Context::GetCurrent()->Global();
 		Local<Object> emitter = global->Get(String::NewSymbol("Emitter::Tock"))->ToObject();
-		Handle<Value> argv[2] = {
-			String::New("tock"), // event name
-			Number::New(timeIdle)   // argument
-		};
 		MakeCallback(emitter, "emit", 1, argv);
 		*/
+		/*
+		Handle<Value> argv[2] = {
+			String::New("tock"),
+			Number::New(timeIdle)
+		};
+		*/
+		idleTime = timeIdle;
+		//FunctionTemplate::New(Emitter::Idle)->GetFunction(argv);
+		//const unsigned argc = 1;
+		Handle<Value> argv[1] = { Local<Value>::New(Number::New(timeIdle)) };
+		//Local<Value> argv[argc] = { Local<Value>::New(timeout) };
+		idleCB->Call(Context::GetCurrent()->Global(), 1, argv);
 	}
-
-	//printf("Idle time: %d seconds\n", timeIdle);
 }
 
 int idle_loop() {
@@ -59,14 +67,16 @@ int idle_loop() {
 
 	uv_timer_init(main_loop, &idler);
 	//uv_unref((uv_handle_t*) &idler);
-	uv_timer_start(&idler, track_idle_time, 0, interval);
+	uv_timer_start(&idler, track_idle_time, timeoutSeconds, interval);
+	//uv_unref((uv_handle_t*)&idler);
 	return uv_run(main_loop, UV_RUN_DEFAULT);
+	//return idleTime;
 }
 
-int idling(Local<Number> usertimeout) {
+int idling(int usertimeout) {
 	lif.cbSize = sizeof(LASTINPUTINFO);
-	timeout = usertimeout->NumberValue();
-	timeoutSeconds = timeout / 1000;
+	//timeout = usertimeout->NumberValue();
+	timeoutSeconds = usertimeout / 1000;
 
 	/*uv_thread_t idle_id;
 	uv_thread_create(&idle_id, IdlingLoop, 0);
@@ -110,7 +120,10 @@ Handle<Value> activity(const Arguments& args) {
 Handle<Value> idle(const Arguments& args) {
 	HandleScope scope;
 
-	Local<Number> timeout = Number::New(args[0]->NumberValue());
+	//Local<Number> timeout = Number::New(args[0]->NumberValue());
+	int timeout = args[0]->NumberValue();
+
+	idleCB = Local<Function>::Cast(args[1]);
 
 	/*
 	Local<Function> cb = Local<Function>::Cast(args[1]);
@@ -140,7 +153,8 @@ Handle<Value> idle(const Arguments& args) {
 }
 
 extern "C" void init(Handle<Object> exports, Handle<Object> module) {
-	module->Set(String::NewSymbol("exports"), FunctionTemplate::New(idle)->GetFunction());
+	module->Set(String::NewSymbol("exports"),
+		FunctionTemplate::New(idle)->GetFunction());
 }
 
 NODE_MODULE(idlerun, init);

@@ -1,9 +1,27 @@
 {
 	"name": "idlerun",
+	"description": "Detect User Idle Status based on Mouse & Keyboard Input",
 	"version": "0.0.1",
+	"author": "Jordan Hess <jordan.hess@gmail.com>",
 	"private": true,
 	"main": "build/Release/idlerun.node",
+	"contributors": [
+		{
+			"name": "Jordan Hess",
+			"email": "jordan.hess@gmail.com"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jojobyte/idlerun.git"
+	},
 	"engines" : {
-		"node" : ">=0.8.x <0.11"
+		"node": ">=0.10.0"
+	},
+	"dependencies": {
+		"nan": "latest"
+	},
+	"scripts": {
+		"test": "node test/test"
 	}
 }
