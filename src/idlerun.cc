@@ -40,23 +40,8 @@ void track_idle_time(uv_timer_t *handle, int status) {
 
 	if(timeIdle >= timeoutSeconds) {
 		//printf("Idle %d seconds > %d seconds\n", timeIdle, timeoutSeconds);
-
-		/*
-		Local<Object> global = Context::GetCurrent()->Global();
-		Local<Object> emitter = global->Get(String::NewSymbol("Emitter::Tock"))->ToObject();
-		MakeCallback(emitter, "emit", 1, argv);
-		*/
-		/*
-		Handle<Value> argv[2] = {
-			String::New("tock"),
-			Number::New(timeIdle)
-		};
-		*/
 		idleTime = timeIdle;
-		//FunctionTemplate::New(Emitter::Idle)->GetFunction(argv);
-		//const unsigned argc = 1;
 		Handle<Value> argv[1] = { Local<Value>::New(Number::New(timeIdle)) };
-		//Local<Value> argv[argc] = { Local<Value>::New(timeout) };
 		idleCB->Call(Context::GetCurrent()->Global(), 1, argv);
 	}
 }
@@ -66,21 +51,14 @@ int idle_loop() {
 	uv_timer_t idler;
 
 	uv_timer_init(main_loop, &idler);
-	//uv_unref((uv_handle_t*) &idler);
 	uv_timer_start(&idler, track_idle_time, timeoutSeconds, interval);
 	//uv_unref((uv_handle_t*)&idler);
 	return uv_run(main_loop, UV_RUN_DEFAULT);
-	//return idleTime;
 }
 
 int idling(int usertimeout) {
 	lif.cbSize = sizeof(LASTINPUTINFO);
-	//timeout = usertimeout->NumberValue();
 	timeoutSeconds = usertimeout / 1000;
-
-	/*uv_thread_t idle_id;
-	uv_thread_create(&idle_id, IdlingLoop, 0);
-	uv_thread_join(&idle_id);*/
 
 	return idle_loop();
 }
@@ -120,19 +98,9 @@ Handle<Value> activity(const Arguments& args) {
 Handle<Value> idle(const Arguments& args) {
 	HandleScope scope;
 
-	//Local<Number> timeout = Number::New(args[0]->NumberValue());
 	int timeout = args[0]->NumberValue();
 
 	idleCB = Local<Function>::Cast(args[1]);
-
-	/*
-	Local<Function> cb = Local<Function>::Cast(args[1]);
-	const unsigned argc = 1;
-	Local<Value> argv[argc] = { Local<Value>::New(Number::New(idleTime)) };
-	//Local<Value> argv[argc] = { Local<Value>::New(timeout) };
-	cb->Call(Context::GetCurrent()->Global(), argc, argv);
-	*/
-
 
 	Local<FunctionTemplate> t = FunctionTemplate::New(Emitter::New);
 	t->InstanceTemplate()->SetInternalFieldCount(1);
@@ -148,8 +116,6 @@ Handle<Value> idle(const Arguments& args) {
 	idling(timeout);
 
 	return scope.Close(obj);
-
-	//return scope.Close(Undefined());
 }
 
 extern "C" void init(Handle<Object> exports, Handle<Object> module) {
